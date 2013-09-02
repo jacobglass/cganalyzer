@@ -10,7 +10,7 @@ import java.util.regex.*;
 // add in a parse chrm function (take from Fasta)
 
 public class Cluster {
-  
+	
 	private List<String[]> clusterList;
 	private int patternsPerFragment;
 	private double avgClusterLength;
@@ -103,7 +103,7 @@ public class Cluster {
 			
 		}
         
-		avgClusterLength = (numInClusters/clusterList.size()) / minFragmentLength;		
+		avgClusterLength = (numInClusters/(clusterList.size() + 1)) / minFragmentLength;
     }
 	
     public List<String[]> getClusterList(double minLength) {

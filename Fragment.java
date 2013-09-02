@@ -6,7 +6,7 @@ import java.util.Arrays;
 // outputs: array of fragment lengths
 
 public class Fragment {
-  
+	
 	private Integer[] positionArr;
 	private double[] lengths;
 	private int patternsPerFragment;
@@ -92,7 +92,7 @@ public class Fragment {
      
     private void generateLengths() {
         
-        if (positionArr.length > 0) {
+        if (positionArr.length > patternsPerFragment) {
             
             lengths = new double[positionArr.length - patternsPerFragment];
             double M = 0;
@@ -104,7 +104,7 @@ public class Fragment {
             // running SD based on Knuth TAOCP vol 2, 3rd edition, page 232
             
             lengths[0] = positionArr[patternsPerFragment] - positionArr[0];
-            
+
             for (i = 1; i < positionArr.length - patternsPerFragment; i++) {
                 lengths[i] = positionArr[i + patternsPerFragment] - positionArr[i];
                 max = (max < lengths[i])? lengths[i] : max;
@@ -120,6 +120,7 @@ public class Fragment {
 			avg = sum / lengths.length;
             
         }
+                
     }
     
 	public double[] getLengths() {

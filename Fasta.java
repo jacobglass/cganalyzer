@@ -11,63 +11,87 @@ import java.util.*;
 // package to handle fasta files
 
 public class Fasta {
-  
-	private File file;
-	private String seq;
-	private String name;
 	
+	private File[] files;
+    private Map<String, String> seqMap;
+    
+
 	// constructor loads sequence
-	public Fasta(String FileName) {
-		file = new File(FileName);
-		seq = readFasta();		
+    
+	public Fasta(File[] inFiles) {
+		files = inFiles;
+        seqMap = new HashMap<String, String>();
+
+		seqMap = readFasta();
 	}
-			
-	public String getSeq() {
-		return(seq);
+    
+	public String getSeq(String seqName) {
+		return(seqMap.get(seqName));
 	}
 	
-	public String getName() {
-		return(name);
+	public Set<String> getNames() {
+		return(seqMap.keySet());
 	}
 	
+    public String getNameList() {
+        String retStr = "";
+        
+        for (String name : seqMap.keySet()) {
+            retStr = retStr + " " + name;
+        }
+        
+        return(retStr);
+    }
 		
 	// reads the fasta file and extracts the header
-	private String readFasta() {
+	private Map<String, String> readFasta() {
         BufferedReader objReader = null;
 		CharBuffer cb = null;
-		
-		try {
-			cb = CharBuffer.allocate((int)file.length());
-		} catch(OutOfMemoryError E) {
-			System.out.printf("\nCould not allocate %d bytes to load %s. Consider using the -XmxNG (N = # gigabytes) flag to specify a larger heap size\n\n", (int)file.length(), file.getName());
-		}
-		
+		String header = "", currLine;
+        boolean firstLine;
+        
+        Pattern p = Pattern.compile(">(?:\\s+)?(.+)");
+        
         try {
 			
-            objReader = new BufferedReader(new FileReader(file));			
-			name = objReader.readLine().substring(1); // extract header
-			
-            String strCurrentLine;
-			
-            while ((strCurrentLine = objReader.readLine()) != null) {
-				
-                if (strCurrentLine.matches("^>")) {
-                    name = name + " " + strCurrentLine;
-                    System.out.printf("Got a second sequence: %s\n", strCurrentLine);
+            for (File file : files) {
+                cb = CharBuffer.allocate((int)file.length());
+                objReader = new BufferedReader(new FileReader(file));
+                firstLine = true;
+                
+                while ((currLine = objReader.readLine()) != null) {
+                    
+                    Matcher m = p.matcher(currLine);
+                    
+                    if (m.find()) {
+                        
+                        if (!firstLine) {
+                            cb.flip();
+                            seqMap.put(header, cb.toString());
+                        }
+
+                        firstLine = false;
+                        header = m.group(1);
+                        cb.clear();
+                    }
+                    else {
+                        cb.put(currLine);
+                    }
                 }
-                else {
-                    cb.put(strCurrentLine);
-                }
+                
+                cb.flip();
+                seqMap.put(header, cb.toString());
             }
-			
-			cb.flip();
-			
-        } catch (IOException e) {
-			
+            
+        }
+        
+        catch(OutOfMemoryError E) {
+            System.out.printf("\nOut of memory. Consider using the -XmxNG (N = # gigabytes) flag to specify a larger heap size\n\n");
+        }
+        catch (IOException e) {
             e.printStackTrace();
-			
-        } finally {
-			
+        }
+        finally {
             try {
                 if (objReader != null)
                     objReader.close();
@@ -75,12 +99,12 @@ public class Fasta {
                 ex.printStackTrace();
             }
         }
-		
-		return(cb.toString());
-	}
+        
+        return(seqMap);
+    }
 	
 	// returns an Integer array of regex positions within the file
-	public Integer[] getPositionList(String regex, boolean caseSensitive) {
+	public Integer[] getPositionList(String seqName, String regex, boolean caseSensitive) {
 		List<Integer> pList = new ArrayList<Integer>();
 		Pattern p;
 		
@@ -91,8 +115,8 @@ public class Fasta {
 			p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
 		}
 			
-		Matcher m = p.matcher(seq);
-		
+		Matcher m = p.matcher(seqMap.get(seqName));
+		        
 		while (m.find()) {
 			pList.add(m.end());
 		}
