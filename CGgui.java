@@ -72,9 +72,12 @@ public class CGgui {
     //initialize menu
     private JMenuBar mb = new JMenuBar();
     private JMenu mnuFile = new JMenu("File");
-    private JMenuItem mnuItemOpen = new JMenuItem("Load Sequence");
-    private JMenuItem mnuItemOpenDataFile = new JMenuItem("Import Saved Data");
-    private JMenuItem mnuItemSaveDataFile = new JMenuItem("Export Data");
+    private JMenuItem mnuLoad = new JMenu("Load");
+    private JMenuItem mnuItemOpenFasta = new JMenuItem("Load Fasta");
+    private JMenuItem mnuItemOpenBed = new JMenuItem("Load Bed");
+    private JMenuItem mnuSaveData = new JMenu("Save Data");
+    private JMenuItem mnuItemSavePositions = new JMenuItem("Save Positions");
+    private JMenuItem mnuItemSaveClusters = new JMenuItem("Save Clusters");
     private JMenuItem mnuSaveCharts = new JMenu("Save Chart");
     private JMenuItem mnuItemSaveChrt = new JMenuItem("Save Histogram");
     private JMenuItem mnuItemSaveGrayChrt = new JMenuItem("Save Grayscale Histogram");
@@ -83,7 +86,6 @@ public class CGgui {
     private JMenuItem mnuItemSaveClusterChrt = new JMenuItem("Save Optimization Chart");
     private JMenuItem mnuItemSaveGrayClusterChrt = new JMenuItem("Save Grayscale Optimization Chart");
     private JMenuItem mnuItemClearData = new JMenuItem("Clear Data");
-    private JMenuItem mnuItemSaveData = new JMenuItem("Save Cluster Locations");
     private JMenuItem mnuItemQuit = new JMenuItem("Quit");
     private JMenu mnuEdit = new JMenu("Edit");
     private JMenuItem mnuItemChartProps = new JMenuItem("Histogram Properties");
@@ -187,9 +189,14 @@ public class CGgui {
         f.getContentPane().add(fEast, BorderLayout.EAST);
         
         //menu
-        mnuFile.add(mnuItemOpen);
-        mnuFile.add(mnuItemSaveDataFile);
-        mnuFile.add(mnuItemOpenDataFile);
+        mnuFile.add(mnuLoad);
+        mnuLoad.add(mnuItemOpenFasta);
+        mnuLoad.add(mnuItemOpenBed);
+        mnuFile.add(mnuSaveData);
+        mnuSaveData.add(mnuItemSavePositions);
+        mnuSaveData.add(mnuItemSaveClusters);
+        
+        //mnuFile.add(mnuItemOpenDataFile);
         mnuFile.add(mnuSaveCharts);
         mnuSaveCharts.add(mnuItemSaveChrt);
         mnuSaveCharts.add(mnuItemSaveMinChrt);
@@ -197,7 +204,6 @@ public class CGgui {
         mnuSaveCharts.add(mnuItemSaveGrayChrt);
         mnuSaveCharts.add(mnuItemSaveGrayMinChrt);
         mnuSaveCharts.add(mnuItemSaveGrayClusterChrt);
-        mnuFile.add(mnuItemSaveData);
         mnuFile.add(mnuItemClearData);
         mnuFile.add(mnuItemQuit);
         mnuEdit.add(mnuItemChartProps);
@@ -512,14 +518,17 @@ public class CGgui {
         mnuItemClearData.addActionListener(new ListenClearData());
         
         //listen for open signal
-        mnuItemOpen.addActionListener(new ListenMenuOpen());
+        mnuItemOpenFasta.addActionListener(new ListenMenuOpenFasta());
+
+        //listen for open signal
+        mnuItemOpenBed.addActionListener(new ListenMenuOpenBed());
+
+        //listen for save position signal
+        mnuItemSavePositions.addActionListener(new ListenMenuSavePositions());
         
-        //listen for import signal
-        mnuItemOpenDataFile.addActionListener(new ListenMenuOpenDataFile());
-        
-        //listen for import signal
-        mnuItemSaveDataFile.addActionListener(new ListenMenuSaveDataFile());
-        
+        //listen for save cluster signal
+        mnuItemSaveClusters.addActionListener(new ListenMenuSaveClusters());
+
         //listen for save histogram chart signal
         mnuItemSaveChrt.addActionListener(new ListenMenuSaveChrt());
         
@@ -547,10 +556,7 @@ public class CGgui {
         
         //listen for edit optimization chart properties signal
         mnuItemClusterProps.addActionListener(new ListenMenuClusterProps());
-        
-        //listen for save data signal
-        mnuItemSaveData.addActionListener(new ListenMenuSaveData());
-        
+                
         //listen for find minimum signal
         mnuItemFindMin.addActionListener(new ListenMenuFindMin());
         
@@ -601,7 +607,7 @@ public class CGgui {
                 if (DEBUG) {
                     PrintText("Searching for fragments between " + MinCG);
                     PrintText(" and " + MaxCG + " long\n");
-                    PrintText("Display: " + CurrCG + " CGs \n");
+                    PrintText("Display: " + CurrCG + " " + regex + " \n");
                 }
 
                 updateData();
@@ -820,7 +826,7 @@ public class CGgui {
             cluster = new Cluster(fragmentMap, CurrCG, MinXVal);
 
             double AveLength = cluster.getAvgClusterLength();
-            if (DEBUG) PrintText("Average Number of CGs in Cluster: " + AveLength + "\n");
+            if (DEBUG) PrintText("Average Number of " + regex + "s in Cluster: " + AveLength + "\n");
             addClusterSize(AveLength);
         }
         catch (NumberFormatException err)
@@ -1004,11 +1010,11 @@ public class CGgui {
     }
     
     //save cluster locations
-    public class ListenMenuSaveData implements ActionListener,Runnable
+    public class ListenMenuSaveClusters implements ActionListener,Runnable
     {
         public void actionPerformed(ActionEvent e)
         {
-            ListenMenuSaveData t = new ListenMenuSaveData();
+            ListenMenuSaveClusters t = new ListenMenuSaveClusters();
             new Thread(t).start();
             javax.swing.SwingUtilities.invokeLater(new Runnable()
                                                    {
@@ -1024,16 +1030,16 @@ public class CGgui {
             JFileChooser fc;
             int rc;
             
-            //save CGdata
+            //save cluster data
             fc = new JFileChooser(wd);
             fc.setDialogType(fc.SAVE_DIALOG);
-            rc = fc.showDialog(null, "Save CG Clusters");
+            rc = fc.showDialog(null, "Save " + regex + " Clusters");
             if (rc == JFileChooser.APPROVE_OPTION)
             {
                 //set up progress bar
-                showProgressbar("Saving CG cluster locations...");
+                showProgressbar("Saving " + regex + " cluster locations...");
 
-                if (DEBUG) PrintText("Saving CG Clusters for N = " + CurrCG + "\n");
+                if (DEBUG) PrintText("Saving " + regex + " Clusters for N = " + CurrCG + "\n");
                 File file = fc.getSelectedFile();
                 
                 //locate the minimum on the chart
@@ -1130,11 +1136,11 @@ public class CGgui {
     }
     
     
-    public class ListenMenuOpen implements ActionListener, Runnable
+    public class ListenMenuOpenFasta implements ActionListener, Runnable
     {
         public void actionPerformed(ActionEvent e)
         {
-            ListenMenuOpen t = new ListenMenuOpen();
+            ListenMenuOpenFasta t = new ListenMenuOpenFasta();
             new Thread(t).start();
             javax.swing.SwingUtilities.invokeLater(new Runnable()
                                                    {
@@ -1169,6 +1175,11 @@ public class CGgui {
                 updateProgressbar("Generating graph...");
                 plotData();
 
+                //enable pattern searching
+                searchPatternLabel.setVisible(true);
+                searchPatternText.setVisible(true);
+                caseCheckBox.setVisible(true);
+
                 hideProgressbar();
             }
             else if(DEBUG) PrintText("Cancel Open\n");
@@ -1178,6 +1189,61 @@ public class CGgui {
             return;
         }
     }
+
+    public class ListenMenuOpenBed implements ActionListener, Runnable
+    {
+        public void actionPerformed(ActionEvent e)
+        {
+            ListenMenuOpenBed t = new ListenMenuOpenBed();
+            new Thread(t).start();
+            javax.swing.SwingUtilities.invokeLater(new Runnable()
+                                                   {
+                public void run()
+                {
+                    jprogressbar.updateUI();
+                }
+            });
+        }
+        public void run()
+        {
+            String wd = System.getProperty("user.dir");
+            JFileChooser fc = new JFileChooser(wd);
+            
+            //allow for multiple files
+            fc.setMultiSelectionEnabled(true);
+            
+            //set filter
+            fc.addChoosableFileFilter(new FileExtFilter());
+            fc.setAcceptAllFileFilterUsed(false);
+            
+            int rc = fc.showDialog(null, "Open");
+            if (rc == JFileChooser.APPROVE_OPTION)
+            {
+                if (!regex.equals(searchPatternText.getText())) {
+                    regex = searchPatternText.getText();
+                }
+                
+                showProgressbar("Loading files...");
+                loadBedFiles(fc.getSelectedFiles());
+                
+                updateProgressbar("Generating graph...");
+                plotData();
+                
+                //disable pattern searching
+                searchPatternLabel.setVisible(false);
+                searchPatternText.setVisible(false);
+                caseCheckBox.setVisible(false);
+
+                hideProgressbar();                
+            }
+            else if(DEBUG) PrintText("Cancel Open\n");
+            
+            //garbage collect
+            //System.gc();
+            return;
+        }
+    }
+    
     
     private void showProgressbar(String text) {
         //set up progress bar
@@ -1220,10 +1286,12 @@ public class CGgui {
         
         key = fasta.getNameList();
         lengthHist = new XYSeries(key, true, false); // autosort, no duplicates
+        fasta.setRegex(regex, caseSensitive);
         
         for (String name : fasta.getNames()) {
                         
-            posList = fasta.getPositionList(name, regex, caseSensitive);
+            posList = fasta.getPositionList(name);
+            
             
             if (posList.length > 0) {
                 fragment = new Fragment(posList, numFeatures);
@@ -1236,66 +1304,51 @@ public class CGgui {
         
         
     }
-    
-    //import from saved data
-    public class ListenMenuOpenDataFile implements ActionListener,Runnable{
-        public void actionPerformed(ActionEvent e)
-        {
-            ListenMenuOpenDataFile t = new ListenMenuOpenDataFile();
-            new Thread(t).start();
-            javax.swing.SwingUtilities.invokeLater(new Runnable()
-                                                   {
-                public void run()
-                {
-                    jprogressbar.updateUI();
-                }
-            });
-        }
-        public void run()
-        {
-            String wd = System.getProperty("user.dir");
-            JFileChooser fc = new JFileChooser(wd);
+
+    public void loadBedFiles(File[] files)
+    {
+        fileList = files;
+        
+        //clear previous graph
+        clearData();
+        
+        //set up files to be loaded
+        String fileName;
+        Bed bed = new Bed(files);
+        
+        Fragment fragment;
+        Integer[] posList;
+        int numFeatures = Integer.parseInt(CGcurrText.getText());
+        
+        //calculate fragment lengths and build histogram
+        updateProgressbar("Calculating fragment lengths...\n");
+        
+        key = bed.getNameList();
+        
+        lengthHist = new XYSeries(key, true, false); // autosort, no duplicates
+        
+        for (String name : bed.getNames()) {
             
-            //do not allow for multiple files
-            fc.setMultiSelectionEnabled(false);
-            
-            int rc = fc.showDialog(null, "Import");
-            if (rc == JFileChooser.APPROVE_OPTION)
-            {
-                //set up progress bar
-                showProgressbar("Importing saved data...");
-                
-                //set up files to be loaded
-                File file = fc.getSelectedFile();
-                openCGdata(file,"\n");
-                
-                //add loaded data to plot histogram
-				
-                for (Map.Entry<String, Fragment> mapEntry : fragmentMap.entrySet()) {
-					Fragment f = mapEntry.getValue();
-					addData(key, f);
-                }
-				
-				plotData();
-                
+            posList = bed.getPositionList(name);
+
+            if (posList.length > 0) {
+                fragment = new Fragment(posList, numFeatures);
+                addData(key, fragment);
+                fragmentMap.put(name, fragment);
             }
-            else if(DEBUG) PrintText("Cancel Open\n");
             
-            //get rid of progress bar
-            hideProgressbar();
-            
-            //garbage collect
-            //System.gc();
-            return;
+            if (DEBUG) PrintText("Completed loading " + name + " (" + posList.length + " positions)\n");
         }
+        
+        
     }
     
     //export data
-    public class ListenMenuSaveDataFile implements ActionListener,Runnable
+    public class ListenMenuSavePositions implements ActionListener,Runnable
     {
         public void actionPerformed(ActionEvent e)
         {
-            ListenMenuSaveDataFile t = new ListenMenuSaveDataFile();
+            ListenMenuSavePositions t = new ListenMenuSavePositions();
             new Thread(t).start();
             javax.swing.SwingUtilities.invokeLater(new Runnable() {
                 public void run()
@@ -1310,16 +1363,16 @@ public class CGgui {
             JFileChooser fc;
             int rc;
             
-            //save CGdata
+            //save position data
             fc = new JFileChooser(wd);
-            rc = fc.showDialog(null, "Export CG positions");
+            rc = fc.showDialog(null, "Export " + regex + " positions");
             if (rc == JFileChooser.APPROVE_OPTION)
             {
                 //set up progress bar
-                showProgressbar("Exporting CG fragment locations...");
+                showProgressbar("Exporting " + regex + " fragment locations...");
                 
                 File file = fc.getSelectedFile();
-                saveCGdata(file,"\n");
+                savePosData(file);
                 
                 //get rid of progress bar
                 hideProgressbar();
@@ -1632,23 +1685,25 @@ public class CGgui {
     public void addData(Comparable series, Fragment fragment)
     {
         int index;
-        
-        for (double length : fragment.getLengths()) {
-            index = lengthHist.indexOf(length);
+
+        if (fragment.getNumFragments() > 0) {
             
-            if (index >= 0) {
-                lengthHist.update(lengthHist.getX(index), lengthHist.getY(index).doubleValue() + 1.0);
-            }
-            else {
-                lengthHist.add(length, 1.0);
+            for (double length : fragment.getLengths()) {
+                index = lengthHist.indexOf(length);
+                
+                if (index >= 0) {
+                    lengthHist.update(lengthHist.getX(index), lengthHist.getY(index).doubleValue() + 1.0);
+                }
+                else {
+                    lengthHist.add(length, 1.0);
+                }
             }
         }
+        
     }
 	
     
 	public void plotData() {
-
-        if (DEBUG) PrintText("Generating graph...\n");
 
         int smoothParam;
         
@@ -1823,7 +1878,7 @@ public class CGgui {
 				fragmentMap.put(name, fragment);
 
             }
-            if (DEBUG) PrintText("Opened CG locations: " + FileName + "\n");
+            if (DEBUG) PrintText("Opened " + regex + " locations: " + FileName + "\n");
             b.close();
         }
         catch (IOException err)
@@ -1834,7 +1889,7 @@ public class CGgui {
         //System.gc();
     }
     
-    public void saveCGdata (File file, String seperator)
+    public void savePosData (File file)
     {
         String FileName = file.getAbsolutePath();
         try
@@ -1844,19 +1899,18 @@ public class CGgui {
             BufferedOutputStream bos = new BufferedOutputStream(fos);
             PrintWriter pw = new PrintWriter(bos);
 
-			pw.print(Integer.toString(fragmentMap.size()) + seperator);
-
             for (Map.Entry<String, Fragment> mapEntry : fragmentMap.entrySet()) {
+                String name = mapEntry.getKey();
                 Fragment f = mapEntry.getValue();
 
-                pw.print(mapEntry.getKey() + "\n" + Integer.toString(f.getNumPositions()) + seperator);
+                pw.print("track name=\"" + mapEntry.getKey() + "\" description=\"" + regex + " positions\"\n");
 				
 				for (Integer pos : f.getPositions()) {
-					pw.print(Integer.toString(pos) + seperator);
+					pw.print(mapEntry.getKey() + "\t" + Integer.toString(pos) + "\t" + Integer.toString(pos) + "\n");
 				}
             }
             
-            if (DEBUG) PrintText("Saved CG locations: " + FileName + "\n");
+            if (DEBUG) PrintText("Saved " + regex + " locations: " + FileName + "\n");
             pw.close();
             bos.close();
             fos.close();

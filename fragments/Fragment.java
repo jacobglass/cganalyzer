@@ -35,22 +35,47 @@ public class Fragment {
 	}
 	
 	public int getNumPositions() {
+        
+        if (positionArr == null) {
+            return(0);
+        }
+        
 		return(positionArr.length);
 	}
 	
 	public int getNumFragments() {
+        if (lengths == null) {
+            generateLengths();
+        }
+
+        if (lengths == null) {
+            return(0);
+        }
+        
 		return(lengths.length);
 	}
 	
 	public Integer getFirstPos() {
+        if (lengths == null) {
+            generateLengths();
+        }
+
 		return(positionArr[0]);
 	}
 	
 	public Integer getLastPos() {
+        if (positionArr == null) {
+            return(0);
+        }
+
 		return(positionArr[positionArr.length - 1]);
 	}
 	
 	public Integer getLastFragmentPos() {
+        if (positionArr == null) {
+            return(0);
+        }
+
 		return(positionArr[positionArr.length - patternsPerFragment]);
 	}
 		

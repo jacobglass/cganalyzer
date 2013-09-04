@@ -10,11 +10,10 @@ import java.util.*;
 
 // package to handle fasta files
 
-public class Fasta {
-	
-	private File[] files;
+public class Fasta extends Sequence {
+
     private Map<String, String> seqMap;
-    
+    private Pattern regex;
 
 	// constructor loads sequence
     
@@ -25,14 +24,28 @@ public class Fasta {
 		seqMap = readFasta();
 	}
     
+    //sets up regular expression for later pattern searching
+    public void setRegex(String regExp, boolean caseSensitive) {
+		if (caseSensitive == true) {
+			regex = Pattern.compile(regExp);
+		}
+		else {
+			regex = Pattern.compile(regExp, Pattern.CASE_INSENSITIVE);
+		}
+
+    }
+    
+    //returns DNA sequence
 	public String getSeq(String seqName) {
 		return(seqMap.get(seqName));
 	}
-	
-	public Set<String> getNames() {
+
+    // returns set of sequence names
+    public Set<String> getNames() {
 		return(seqMap.keySet());
 	}
 	
+	// returns concatenated list of sequence names
     public String getNameList() {
         String retStr = "";
         
@@ -40,9 +53,9 @@ public class Fasta {
             retStr = retStr + " " + name;
         }
         
-        return(retStr);
+        return(retStr.trim());
     }
-		
+
 	// reads the fasta file and extracts the header
 	private Map<String, String> readFasta() {
         BufferedReader objReader = null;
@@ -58,6 +71,7 @@ public class Fasta {
                 cb = CharBuffer.allocate((int)file.length());
                 objReader = new BufferedReader(new FileReader(file));
                 firstLine = true;
+                header = file.getName();
                 
                 while ((currLine = objReader.readLine()) != null) {
                     
@@ -104,18 +118,10 @@ public class Fasta {
     }
 	
 	// returns an Integer array of regex positions within the file
-	public Integer[] getPositionList(String seqName, String regex, boolean caseSensitive) {
+	public Integer[] getPositionList(String seqName) {
 		List<Integer> pList = new ArrayList<Integer>();
-		Pattern p;
-		
-		if (caseSensitive == true) {
-			p = Pattern.compile(regex);
-		}
-		else {
-			p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-		}
 			
-		Matcher m = p.matcher(seqMap.get(seqName));
+		Matcher m = regex.matcher(seqMap.get(seqName));
 		        
 		while (m.find()) {
 			pList.add(m.end());
